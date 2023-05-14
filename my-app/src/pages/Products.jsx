@@ -17,6 +17,7 @@ function Products() {
         key: '',
         direction: '',
     });
+    const [errors, setErrors] = useState({});
     //search
     const [searchQuery, setSearchQuery] = useState("");
     //pagination
@@ -82,28 +83,51 @@ function Products() {
         // } catch (error) {
         //     alert(error);
         // }
-        let data = {
-            productName: productName,
-            description: description,
-            createdDate: formattedDate,
-            category: category,
-            price: price,
-            photoFileName: photoFileName,
+
+        const errors = {};
+        if (!productName) {
+            errors.productName = 'Product Name is required';
+        }
+        if (!description) {
+            errors.description = 'Description is required';
+        }
+        if (!category) {
+            errors.category = 'Category is required';
+        }
+        const format = /^[0-9]+$/;
+        if (!price) {
+            errors.price = 'Price is required';
+        } else if (!format.test(price)) {
+            errors.price = 'Invalid price';
         }
 
-        try {
-            await axios.post("https://localhost:44302/api/Product/AddProduct/", data);
-            alert("Product is added to the inventory !");
-            setProductId("");
-            setProductName("");
-            setDescription("");
-            setCategory("");
-            setPrice("");
-            setPhotoFileName("");
-            load();
-        } catch (error) {
-            alert(error);
+        if (Object.keys(errors).length > 0) {
+            setErrors(errors);
+        } else {
+            let data = {
+                productName: productName,
+                description: description,
+                createdDate: formattedDate,
+                category: category,
+                price: price,
+                photoFileName: photoFileName,
+            }
+
+            try {
+                await axios.post("https://localhost:44302/api/Product/AddProduct/", data);
+                alert("Product is added to the inventory !");
+                setProductId("");
+                setProductName("");
+                setDescription("");
+                setCategory("");
+                setPrice("");
+                setPhotoFileName("");
+                load();
+            } catch (error) {
+                alert(error);
+            }
         }
+
     }
 
     async function editProduct(data) {
@@ -134,29 +158,52 @@ function Products() {
     }
 
     async function UpdateProduct(event) {
-        try {
-            await axios.patch("https://localhost:44302/api/Product/UpdateProduct/" + products.find((p) => p.productId === productId).productId || productId,
-                {
-                    productId: productId,
-                    productName: productName,
-                    description: description,
-                    createdDate: formattedDate,
-                    category: category,
-                    price: price,
-                    photoFileName: photoFileName,
-                }
-            );
-            alert("Product is updated !");
-            setProductId("");
-            setProductName("");
-            setDescription("");
-            setCategory("");
-            setPrice("");
-            setPhotoFileName("");
-            load();
-        } catch (error) {
-            alert(error);
+
+        const errors = {};
+        if (!productName) {
+            errors.productName = 'Product Name is required';
         }
+        if (!description) {
+            errors.description = 'Description is required';
+        }
+        if (!category) {
+            errors.category = 'Category is required';
+        }
+        const format = /^[0-9]+$/;
+        if (!price) {
+            errors.price = 'Price is required';
+        } else if (!format.test(price)) {
+            errors.price = 'Invalid price';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setErrors(errors);
+        } else {
+            try {
+                await axios.patch("https://localhost:44302/api/Product/UpdateProduct/" + products.find((p) => p.productId === productId).productId || productId,
+                    {
+                        productId: productId,
+                        productName: productName,
+                        description: description,
+                        createdDate: formattedDate,
+                        category: category,
+                        price: price,
+                        photoFileName: photoFileName,
+                    }
+                );
+                alert("Product is updated !");
+                setProductId("");
+                setProductName("");
+                setDescription("");
+                setCategory("");
+                setPrice("");
+                setPhotoFileName("");
+                load();
+            } catch (error) {
+                alert(error);
+            }
+        }
+
     }
 
     // Sort
@@ -194,16 +241,16 @@ function Products() {
 
         return (
             <thead>
-            <tr>
-                {headers.map((header) => (
-                    <th key={header.key} onClick={() => handleSort(header.key)}>
-                        {header.label + (sortConfig.key === header.key ? '' : '  ↕ ')}
-                        {sortConfig.key === header.key && (
-                            <span>{sortConfig.direction === 'asc' ? '  ↑' : '  ↓'}</span>
-                        )}
-                    </th>
-                ))}
-            </tr>
+                <tr>
+                    {headers.map((header) => (
+                        <th key={header.key} onClick={() => handleSort(header.key)}>
+                            {header.label + (sortConfig.key === header.key ? '' : '  ↕ ')}
+                            {sortConfig.key === header.key && (
+                                <span>{sortConfig.direction === 'asc' ? '  ↑' : '  ↓'}</span>
+                            )}
+                        </th>
+                    ))}
+                </tr>
             </thead>
         );
     }
@@ -224,12 +271,14 @@ function Products() {
     const searchInput = () => {
         return (
             <div>
+                <br />
                 <input
                     type='text'
                     value={searchQuery}
                     onChange={handleSearch}
                     placeholder='Search...'
                 />
+                <br />
             </div>
         );
     }
@@ -247,34 +296,34 @@ function Products() {
     const tableRows = () => {
         return (
             <tbody>
-            {currentItems.map((item) => (
-                <tr key={item.productId}>
-                    <td>{item.productId}</td>
-                    <td>{item.productName}</td>
-                    <td>{item.description}</td>
-                    <td>{item.createdDate}</td>
-                    <td>{item.category}</td>
-                    <td>{item.price}</td>
-                    <td>
-                        {item.photoFileName}
-                        {/* {imageData && <img src={`data:image/png;base64,${imageData}`} />} */}
-                    </td>
-                    <td>
-                        <button type='button' className='btn btn-success mr-1' onClick={() => editProduct(item)}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                                <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
-                            </svg>
-                        </button>
-                        <button type='button' className='btn btn-danger mr-1' onClick={() => deleteProduct(item.productId)}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
-                                <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z" />
-                            </svg>
-                        </button>
-                    </td>
-                </tr>
-            ))}
-        </tbody>
+                {currentItems.map((item) => (
+                    <tr key={item.productId}>
+                        <td>{item.productId}</td>
+                        <td>{item.productName}</td>
+                        <td>{item.description}</td>
+                        <td>{item.createdDate}</td>
+                        <td>{item.category}</td>
+                        <td>{item.price}</td>
+                        <td>
+                            {item.photoFileName}
+                            {/* {imageData && <img src={`data:image/png;base64,${imageData}`} />} */}
+                        </td>
+                        <td>
+                            <button type='button' className='btn btn-success mr-1' onClick={() => editProduct(item)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                    <path fillRule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z" />
+                                </svg>
+                            </button>
+                            <button type='button' className='btn btn-danger mr-1' onClick={() => deleteProduct(item.productId)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+                                    <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
         );
     }
 
@@ -297,11 +346,12 @@ function Products() {
     //image
 
     return (
-        <div>
-
-            <h1>Product Details</h1>
-            <div className='container mt-4'>
-                    <div className='form-group'>
+        <div className='container'>
+            <div className='row justify-content-center'>
+                <div className='card col-md-9'>
+                    <br />
+                    <h3 className='text-center'>Product Details</h3>
+                    <div className='card-body'>
                         <input
                             type='hidden'
                             className='form-control'
@@ -310,67 +360,93 @@ function Products() {
                                 setProductId(event.target.value);
                             }}>
                         </input>
-                        <label>Product name</label>
-                        <input
-                            type='text'
-                            className='form-control'
-                            value={productName}
-                            onChange={(event) => {
-                                setProductName(event.target.value);
-                            }}>
-                        </input>
+                        <div>
+                            <label>Product name</label>
+                            <input
+                                type='text'
+                                className='form-control'
+                                value={productName}
+                                onChange={(event) => {
+                                    setProductName(event.target.value);
+                                }}>
+                            </input>
+                            {errors.productName && <span>{errors.productName}</span>}
+                        </div>
 
-                        <label>Product description</label>
-                        <input
-                            type='text'
-                            className='form-control'
-                            value={description}
-                            onChange={(event) => {
-                                setDescription(event.target.value);
-                            }}>
-                        </input>
+                        <div>
+                            <label>Product description</label>
+                            <input
+                                type='text'
+                                className='form-control'
+                                value={description}
+                                onChange={(event) => {
+                                    setDescription(event.target.value);
+                                }}>
+                            </input>
+                            {errors.description && <span>{errors.description}</span>}
+                        </div>
 
-                        <label>Category</label>
-                        <input
-                            type='text'
-                            className='form-control'
-                            value={category}
-                            onChange={(event) => {
-                                setCategory(event.target.value);
-                            }}>
-                        </input>
+                        <div>
+                            <label>Category</label>
+                            <input
+                                type='text'
+                                className='form-control'
+                                value={category}
+                                onChange={(event) => {
+                                    setCategory(event.target.value);
+                                }}>
+                            </input>
+                            {errors.category && <span>{errors.category}</span>}
+                        </div>
 
-                        <label>Price</label>
-                        <input
-                            type='text'
-                            className='form-control'
-                            value={price}
-                            onChange={(event) => {
-                                setPrice(event.target.value);
-                            }}>
-                        </input>
+                        <div>
+                            <label>Price</label>
+                            <input
+                                type='text'
+                                className='form-control'
+                                placeholder='Rs.'
+                                value={price}
+                                onChange={(event) => {
+                                    setPrice(event.target.value);
+                                }}>
+                            </input>
+                            {errors.price && <span>{errors.price}</span>}
+                        </div>
 
-                        <label>Image</label>
-                        <br />
+                        <div>
+                            <label>Image</label>
+                            <br />
 
-                        <input type='file' onChange={(e) => {setPhotoFileName(e.target.name)}} />
+                            <input type='file' onChange={(e) => { setPhotoFileName(e.target.name) }} />
+                        </div>
+
+                        <div>
+                            <button className='btn btn-primary mt-4' onClick={() => { saveProduct() }} disabled={addDisable}>
+                                Add
+                            </button>
+                            <button className='btn btn-success mt-4' onClick={() => { UpdateProduct() }} disabled={clickedEdit}>
+                                Update
+                            </button>
+                        </div>
+
                     </div>
-                <div>
-                    <button className='btn btn-primary mt-4' onClick={() => { saveProduct() }} disabled={addDisable}>
-                        Add
-                    </button>
-                    <button className='btn btn-success mt-4' onClick={() => { UpdateProduct() }} disabled={clickedEdit}>
-                        Update
-                    </button>
                 </div>
             </div>
 
-            {searchInput()}
-            <table className='table table-striped'>
-                {tableHeader()}
-                {tableRows()}
-            </table>
-            {pagination()}
+            <div className='row justify-content-center'>
+                <div className='card col-md-9'>
+                        <div className='d-flex justify-content-end'>
+                            {searchInput()}
+                        </div>
+                        <table className='table table-striped table-hover'>
+                            {tableHeader()}
+                            {tableRows()}
+                        </table>
+                        <div className='d-flex justify-content-center'>
+                            {pagination()}
+                        </div>
+                </div>
+            </div>
         </div>
     )
 }
