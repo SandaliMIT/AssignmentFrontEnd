@@ -1,5 +1,6 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
+import Pagination from '../components/Pagination';
 
 function Products() {
 
@@ -8,18 +9,33 @@ function Products() {
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("");
     const [price, setPrice] = useState("");
-    const [photoFileName, setPhotoFileName] = useState("");
+    const [photoFileName, setPhotoFileName] = useState(null);
     const [products, setProducts] = useState([]);
+    const [clickedEdit, setClickedEdit] = useState(true);
+    const [addDisable, setAddDisable] = useState(false);
     const [sortConfig, setSortConfig] = useState({
         key: '',
         direction: '',
     });
+    //search
     const [searchQuery, setSearchQuery] = useState("");
-    const [clickedEdit, setClickedEdit] = useState(true);
-    const [addDisable, setAddDisable] = useState(false);
+    //pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(4);
+    //image
+    const [imageData, setImageData] = useState(null);
 
     useEffect(() => {
         (async () => await load())();
+        // const fetchImage = async () => {
+        //     try {
+        //         const res = await axios.get("https://localhost:44302/api/Product/image/"+photoFileName);
+        //         setImageData(res.data);
+        //     } catch (error) {
+        //         console.error("Error fetching image : ", error)
+        //     }
+        // };
+        // fetchImage();
     }, []);
 
     async function load() {
@@ -35,6 +51,37 @@ function Products() {
     const formattedDate = `${year}-${month}-${day}`;
 
     async function saveProduct(event) {
+        // const formData = new FormData();
+        // formData.append('image', photoFileName);
+        // console.log(formData, "/./,..,,")
+
+        // try {
+        //     const response = await axios.post("https://localhost:44302/api/Product/AddProduct/", formData, {
+        //         headers: {
+        //             'Content-Type': 'multipart/form-data',
+        //         },
+        //         params: {
+        //             productName: productName,
+        //             description: description,
+        //             createdDate: formattedDate,
+        //             category: category,
+        //             price: price,
+        //             // photoFileName: photoFileName,
+        //         },
+        //     });
+        //     alert("Product is added to the inventory !");
+        //     setProductId("");
+        //     setProductName("");
+        //     setDescription("");
+        //     setCategory("");
+        //     setPrice("");
+        //     setPhotoFileName("");
+        //     load();
+
+        //     console.log('Success', response.data);
+        // } catch (error) {
+        //     alert(error);
+        // }
         let data = {
             productName: productName,
             description: description,
@@ -87,7 +134,6 @@ function Products() {
     }
 
     async function UpdateProduct(event) {
-        // event.preventdefault();
         try {
             await axios.patch("https://localhost:44302/api/Product/UpdateProduct/" + products.find((p) => p.productId === productId).productId || productId,
                 {
@@ -142,7 +188,7 @@ function Products() {
             { label: 'CreatedDate', key: 'createdDate' },
             { label: 'Category', key: 'category' },
             { label: 'Price', key: 'price' },
-            { label: 'PhotoFileName', key: 'photoFileName' },
+            { label: 'Image', key: 'image' },
             { label: 'Actions', key: 'actions' },
         ];
 
@@ -165,12 +211,13 @@ function Products() {
     // Search
     const handleSearch = (event) => {
         setSearchQuery(event.target.value);
+        setCurrentPage(1);
     }
 
     const filteredData = products.filter((item) => {
         return (
             item.productName.toLowerCase().includes(searchQuery.toLocaleLowerCase()) ||
-            item.createdDate.includes(searchQuery)
+            item.createdDate.includes(searchQuery) || ''
         );
     });
 
@@ -187,18 +234,31 @@ function Products() {
         );
     }
 
-    const filteredRaws = () => {
-        return(
+    //pagination
+    const handlePage = (page) => {
+        setCurrentPage(page);
+    }
+
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentItems = filteredData.slice(startIndex, endIndex);
+
+    const tableRows = () => {
+        return (
             <tbody>
-                {filteredData.map((item) => (
-                    <tr key={item.productId}>
+            {currentItems.map((item) => (
+                <tr key={item.productId}>
                     <td>{item.productId}</td>
                     <td>{item.productName}</td>
                     <td>{item.description}</td>
                     <td>{item.createdDate}</td>
                     <td>{item.category}</td>
                     <td>{item.price}</td>
-                    <td>{item.photoFileName}</td>
+                    <td>
+                        {item.photoFileName}
+                        {/* {imageData && <img src={`data:image/png;base64,${imageData}`} />} */}
+                    </td>
                     <td>
                         <button type='button' className='btn btn-success mr-1' onClick={() => editProduct(item)}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
@@ -212,18 +272,35 @@ function Products() {
                             </svg>
                         </button>
                     </td>
-                    </tr>
-                ))}
-            </tbody>
+                </tr>
+            ))}
+        </tbody>
         );
     }
+
+    const pagination = () => {
+        const pageButtons = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pageButtons.push(
+                <button
+                    key={i}
+                    onClick={() => handlePage(i)}
+                    className={currentPage === i ? 'active' : ''}
+                >
+                    {i}
+                </button>
+            );
+        }
+        return <div className='pagination'>{pageButtons}</div>
+    }
+
+    //image
 
     return (
         <div>
 
             <h1>Product Details</h1>
             <div className='container mt-4'>
-                <form>
                     <div className='form-group'>
                         <input
                             type='hidden'
@@ -273,18 +350,11 @@ function Products() {
                             }}>
                         </input>
 
-                        <label>Photo file name</label>
-                        <input
-                            type='text'
-                            className='form-control'
-                            id='id'
-                            value={photoFileName}
-                            onChange={(event) => {
-                                setPhotoFileName(event.target.value);
-                            }}>
-                        </input>
+                        <label>Image</label>
+                        <br />
+
+                        <input type='file' onChange={(e) => {setPhotoFileName(e.target.name)}} />
                     </div>
-                </form>
                 <div>
                     <button className='btn btn-primary mt-4' onClick={() => { saveProduct() }} disabled={addDisable}>
                         Add
@@ -298,9 +368,9 @@ function Products() {
             {searchInput()}
             <table className='table table-striped'>
                 {tableHeader()}
-                {filteredRaws()}
-
+                {tableRows()}
             </table>
+            {pagination()}
         </div>
     )
 }
