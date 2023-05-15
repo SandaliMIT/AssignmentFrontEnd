@@ -40,7 +40,7 @@ function Products() {
     }, []);
 
     async function load() {
-        const result = await axios.get("https://localhost:44302/api/Product/Getproduct/");
+        const result = await axios.get("http://localhost:8080/api/Product/Getproduct/");
         setProducts(result.data);
         console.log(result.data);
     }
@@ -114,7 +114,7 @@ function Products() {
             }
 
             try {
-                await axios.post("https://localhost:44302/api/Product/AddProduct/", data);
+                await axios.post("http://localhost:8080/api/Product/AddProduct/", data);
                 alert("Product is added to the inventory !");
                 setProductId("");
                 setProductName("");
@@ -145,7 +145,7 @@ function Products() {
 
         const confirmed = window.confirm('Are you sure to delete this product ?');
         if (confirmed) {
-            await axios.delete("https://localhost:44302/api/Product/DeleteProduct/" + id);
+            await axios.delete("http://localhost:8080/api/Product/DeleteProduct/" + id);
             alert("Product is deleted");
             setProductId("");
             setProductName("");
@@ -180,7 +180,7 @@ function Products() {
             setErrors(errors);
         } else {
             try {
-                await axios.patch("https://localhost:44302/api/Product/UpdateProduct/" + products.find((p) => p.productId === productId).productId || productId,
+                await axios.patch("http://localhost:8080/api/Product/UpdateProduct/" + products.find((p) => p.productId === productId).productId || productId,
                     {
                         productId: productId,
                         productName: productName,
